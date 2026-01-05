@@ -1,0 +1,132 @@
+*{user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+img,canvas{-webkit-user-drag:none;user-drag:none}
+html,body{margin:0;padding:0;background:#0f1220;overflow:hidden;touch-action:manipulation;font-family:"Inter",sans-serif}
+canvas{display:block}
+
+/* ---------- HUD ---------- */
+#topHUD{position:fixed;top:10px;left:10px;display:flex;align-items:center;gap:10px;z-index:10}
+#pauseBtn{font-family:"Poppins",sans-serif;font-size:16px;padding:8px 10px;border:none;border-radius:12px;background:#1b2038;color:#fff}
+#stadium{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#1b2038;border:1px solid rgba(255,255,255,.08);box-shadow:0 6px 20px rgba(0,0,0,.25);font-family:"Poppins",sans-serif;color:#fff}
+#stadium .t{font-size:12px;opacity:.85}
+#stadium .v{font-size:14px;font-weight:600}
+#stadium .sep{opacity:.35;padding:0 2px}
+#stadium .red{color:#ff6b6b}
+#stadium .blue{color:#4cffd7}
+#stadium .round{color:#fff}
+
+#turnHUD{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:10;font-family:"Poppins",sans-serif;font-size:13px;color:rgba(255,255,255,.55);pointer-events:none}
+
+#toast{position:fixed;left:50%;top:72px;transform:translateX(-50%);z-index:11;min-width:240px;max-width:86vw;padding:10px 14px;border-radius:14px;background:#1b2038;border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.35);color:#fff;font-family:"Inter",sans-serif;font-size:13px;text-align:center;opacity:0;pointer-events:none}
+#toast.show{animation:toastInOut 2.5s ease forwards}
+@keyframes toastInOut{0%{opacity:0;transform:translateX(-50%)translateY(-10px)scale(.98)}15%,80%{opacity:1;transform:translateX(-50%)translateY(0)scale(1)}100%{opacity:0;transform:translateX(-50%)translateY(-10px)scale(.98)}}
+
+/* ---------- Screens ---------- */
+.screen{position:fixed;inset:0;background:#0f1220;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;opacity:0;pointer-events:none;transition:opacity .35s ease;z-index:20}
+.screen.active{opacity:1;pointer-events:auto}
+.overlay{position:fixed;inset:0;background:rgba(15,18,32,.9);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;opacity:0;pointer-events:none;transition:opacity .35s ease;z-index:25}
+.overlay.active{opacity:1;pointer-events:auto}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+
+/* ---------- Typography ---------- */
+.title{font-family:"Plus Jakarta Sans",sans-serif;font-size:34px;color:#fff;margin:0}
+.desc{font-family:"Inter",sans-serif;font-size:14px;color:#bfc3ff;text-align:center;margin:0 18px}
+
+/* ---------- Buttons ---------- */
+button{font-family:"Poppins",sans-serif;padding:12px 22px;font-size:15px;border:none;border-radius:12px;background:#4cffd7;color:#000}
+.wide{width:min(320px,86vw)}
+.redBtn{background:#ff6b6b}
+.blueBtn{background:#4cffd7}
+.ghostBtn{background:#1b2038;color:#fff;border:1px solid rgba(255,255,255,.1)}
+
+/* ---------- Game Over Stadium ---------- */
+.go-stadium{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#1b2038;border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.35);font-family:"Poppins",sans-serif;color:#fff}
+.go-stadium .t{font-size:12px;opacity:.85}
+.go-stadium .v{font-size:14px;font-weight:600}
+.go-stadium .sep{opacity:.35;padding:0 2px}
+.go-stadium .red{color:#ff6b6b}
+.go-stadium .blue{color:#4cffd7}
+
+/* ---------- About Box ---------- */
+#about{padding:18px;box-sizing:border-box}
+#aboutBox{
+  background:#16203a;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 12px 40px rgba(0,0,0,.45);
+  border-radius:16px;
+  width:min(420px,92vw);
+  max-height:min(78vh,560px);
+  padding:18px 18px 16px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+}
+#aboutBox .title{text-align:center;margin:0;font-size:28px;line-height:1.05}
+.aboutLine{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:10px 0;border-top:1px solid rgba(255,255,255,.08);color:#fff}
+.aboutLine:first-of-type{border-top:none;padding-top:0}
+.aboutKey{font-family:"Poppins",sans-serif;font-size:13px;opacity:.85;min-width:86px;text-align:left}
+.aboutVal{font-family:"Inter",sans-serif;font-size:13px;color:#bfc3ff;line-height:1.35;text-align:right;flex:1;word-break:break-word;overflow-wrap:anywhere}
+.aboutFooter{margin-top:4px;font-family:"Inter",sans-serif;font-size:12px;color:rgba(255,255,255,.55);text-align:center}
+.aboutLinks{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:nowrap;
+  margin:10px 0 6px;
+}
+.aboutLinks .pill{
+  text-decoration:none;
+  font-family:"Poppins",sans-serif;
+  font-size:13px;
+  padding:9px 14px;
+  border-radius:999px;
+  background:#1b2038;
+  border:1px solid rgba(255,255,255,.1);
+  color:#4cffd7;
+  min-width:92px;
+  text-align:center;
+}
+#closeAbout{margin-top:6px;width:100%}
+
+/* ---------- About Box Responsive Fix ---------- */
+@media(max-width:480px){
+  #aboutBox{
+    width:92vw;
+    max-height:80vh;
+    padding:16px 14px;
+  }
+  .aboutLinks{
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .aboutLinks .pill{
+    min-width:40%;
+    flex:1 1 40%;
+    padding:8px 10px;
+    font-size:12.5px;
+  }
+  .aboutKey{font-size:12px}
+  .aboutVal{font-size:12.5px}
+  #closeAbout{font-size:14px;padding:10px 14px}
+}
+@media(max-width:360px){
+  .aboutLine{flex-direction:column;align-items:stretch;gap:6px}
+  .aboutVal{text-align:left}
+  .aboutLinks .pill{min-width:100%;flex:1 1 100%}
+}
+
+/* ---------- +1 Fly ---------- */
+.plusOneFly{position:fixed;z-index:9999;pointer-events:none;font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;font-size:56px;letter-spacing:1px;text-shadow:0 10px 30px rgba(0,0,0,.45);opacity:1;transform:translate(-50%,-50%)scale(1.1)}
+
+/* ---------- PvP Swipe Bubble ---------- */
+#turnSwipe{position:fixed;top:78px;left:0;right:0;z-index:12;pointer-events:none;display:flex;justify-content:center}
+#turnSwipe .bubble{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#1b2038;border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.35);font-family:"Poppins",sans-serif;font-size:13px;color:#fff;opacity:0;transform:translateX(0)scale(.98)}
+#turnSwipe .dot{width:10px;height:10px;border-radius:999px;box-shadow:0 0 0 3px rgba(255,255,255,.06) inset}
+#turnSwipe .dot.red{background:#ff6b6b}
+#turnSwipe .dot.blue{background:#4cffd7}
+#turnSwipe .bubble.left{animation:swipeLeftBubble .42s cubic-bezier(.2,.9,.2,1) forwards}
+#turnSwipe .bubble.right{animation:swipeRightBubble .42s cubic-bezier(.2,.9,.2,1) forwards}
+@keyframes swipeLeftBubble{0%{opacity:0;transform:translateX(-56px)scale(.92)}35%{opacity:1;transform:translateX(-10px)scale(1.02)}70%{opacity:1;transform:translateX(0)scale(1)}100%{opacity:0;transform:translateX(18px)scale(.98)}}
+@keyframes swipeRightBubble{0%{opacity:0;transform:translateX(56px)scale(.92)}35%{opacity:1;transform:translateX(10px)scale(1.02)}70%{opacity:1;transform:translateX(0)scale(1)}100%{opacity:0;transform:translateX(-18px)scale(.98)}}

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Site Icon -->
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<!-- HUD -->
+<div id="topHUD">
+  <button id="pauseBtn">⏸</button>
+  <div id="stadium">
+    <span class="t red">RED</span><span class="v red" id="redScore">0</span>
+    <span class="sep">|</span>
+    <span class="t round">ROUND</span><span class="v round" id="roundNum">1</span>
+    <span class="sep">|</span>
+    <span class="t blue">BLUE</span><span class="v blue" id="blueScore">0</span>
+  </div>
+</div>
+
+<div id="turnHUD"></div>
+<div id="toast"></div>
+<div id="turnSwipe"></div>
+
+<!-- MAIN MENU -->
+<div id="menu" class="screen active">
+  <h1 class="title">Tic Tac Toe</h1>
+  <p class="desc">Red vs Blue</p>
+  <button class="wide" id="pvp">Play vs Player</button>
+  <button class="wide" id="pvc">Play vs Computer</button>
+  <button class="wide" id="aboutBtn">About Game</button>
+</div>
+
+<!-- SIDE SELECT -->
+<div id="sideSelect" class="screen">
+  <h1 class="title">Choose Your Side</h1>
+  <p class="desc">Pick your team</p>
+  <div class="row">
+    <button class="wide redBtn" id="pickRed">Red (X)</button>
+    <button class="wide blueBtn" id="pickBlue">Blue (O)</button>
+  </div>
+  <button class="wide ghostBtn" id="sideBack">Back</button>
+</div>
+
+<!-- PAUSE -->
+<div id="pause" class="screen">
+  <h1 class="title">Paused</h1>
+  <button class="wide" id="resume">Resume</button>
+  <button class="wide" id="aboutPause">About Game</button>
+  <button class="wide" id="menuPause">Main Menu</button>
+</div>
+
+<!-- GAME OVER -->
+<div id="end" class="overlay">
+  <h1 id="endText" class="title"></h1>
+  <div class="go-stadium">
+    <span class="t red">RED</span><span class="v red" id="goRedVal">0</span>
+    <span class="sep">|</span>
+    <span class="t blue">BLUE</span><span class="v blue" id="goBlueVal">0</span>
+  </div>
+  <button class="wide" id="again">Play Again</button>
+  <button class="wide" id="mainMenu">Main Menu</button>
+</div>
+
+<!-- ABOUT -->
+<div id="about" class="overlay">
+  <div id="aboutBox">
+    <h1 class="title">About Game</h1>
+
+    <div class="aboutLine">
+      <span class="aboutKey">Version</span>
+      <span class="aboutVal" id="aboutVersion">—</span>
+    </div>
+
+    <div class="aboutLine">
+      <span class="aboutKey">How To Play</span>
+      <span class="aboutVal" id="aboutDesc">—</span>
+    </div>
+
+    <div class="aboutLine">
+      <span class="aboutKey">Updates</span>
+      <span class="aboutVal" id="aboutInfo">—</span>
+    </div>
+
+    <div class="aboutFooter">© 2026 TheGeneric. All Rights Reserved.</div>
+
+    <div class="aboutLinks">
+      <a class="pill" href="https://www.youtube.com/@goat8six" target="_blank">YouTube</a>
+      <a class="pill" href="https://discord.gg/KjEZtRmWwc" target="_blank">Discord</a>
+      <a class="pill" href="https://github.com/t4studios" target="_blank">GitHub</a>
+    </div>
+
+    <button class="wide" id="closeAbout">Close</button>
+  </div>
+</div>
+
+<!-- ENV FIRST -->
+<script src="js/game.env.js"></script>
+<script src="js/game.js"></script>
+
+</body>
+</html>
