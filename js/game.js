@@ -353,6 +353,18 @@
     return `${minutes}:${String(seconds).padStart(2, "0")}`;
   }
 
+  function sanitizeRoomCode(value) {
+    return value.replace(/\D/g, "").slice(0, 6);
+  }
+
+  function updateJoinAvailability() {
+    const onlineReady = isOnlineAvailable();
+    const searching = onlineQueueState !== "idle";
+    const code = sanitizeRoomCode(onlineCodeInput?.value || "");
+    const valid = /^\d{6}$/.test(code);
+    if (onlineJoinBtn) onlineJoinBtn.disabled = !onlineReady || searching || !valid;
+  }
+
   function startOnlineEta() {
     onlineEtaStart = performance.now();
     setOnlineEta("Opponent ETA: 0:00");
@@ -383,6 +395,7 @@
     if (onlineSoloBtn) onlineSoloBtn.disabled = !onlineReady || onlineQueueState === "searching";
     if (onlineCodeInput) onlineCodeInput.disabled = !onlineReady || searching;
     if (onlineCancelBtn) onlineCancelBtn.style.display = searching ? "inline-block" : "none";
+    updateJoinAvailability();
 
     if (!onlineReady) {
       setOnlineStatus("You're offline. Connect to the internet to play online.");
@@ -405,6 +418,8 @@
         if (onlineCodeInput) onlineCodeInput.value = "";
         stopOnlineEta();
       }
+    } else if (onlineScreen && onlineScreen.classList.contains("active") && onlineQueueState === "idle") {
+      setOnlineStatus("Back online. Ready to connect.");
     }
     updateOnlineControls();
   }
@@ -465,12 +480,13 @@
       setOnlineStatus("You're offline. Connect to the internet to play online.");
       return;
     }
-    const code = (onlineCodeInput?.value || "").replace(/\s/g, "");
+    const code = sanitizeRoomCode(onlineCodeInput?.value || "");
     if (!/^\d{6}$/.test(code)) {
       setOnlineStatus("Enter a valid six digit room code.");
       return;
     }
     playSfx("pop");
+    if (onlineCodeInput) onlineCodeInput.value = code;
     onlineQueueState = "searching";
     setOnlineStatus(`Joining room ${code}...`);
     updateOnlineControls();
@@ -487,6 +503,19 @@
       return;
     }
     playSfx("pop");
+    if (onlineQueueState === "uhoh") {
+      onlineQueueState = "searching";
+      setOnlineStatus("Still waiting for an opponent...");
+      updateOnlineControls();
+      clearOnlineTimers();
+      startOnlineEta();
+      onlineUhOhTimer = setTimeout(() => {
+        onlineQueueState = "uhoh";
+        setOnlineStatus("Uh oh... no one joined yet. Keep waiting?");
+        updateOnlineControls();
+      }, 60000);
+      return;
+    }
     const code = String(Math.floor(100000 + Math.random() * 900000));
     if (onlineCodeInput) onlineCodeInput.value = code;
     onlineQueueState = "searching";
@@ -532,6 +561,19 @@
       setOnlineStatus("Uh oh... no matches yet. Want to keep searching?");
       updateOnlineControls();
     }, 60000);
+  });
+
+  onlineCodeInput && onlineCodeInput.addEventListener("input", (e) => {
+    const target = e.target;
+    const sanitized = sanitizeRoomCode(target.value);
+    if (target.value !== sanitized) target.value = sanitized;
+    updateJoinAvailability();
+  });
+
+  onlineCodeInput && onlineCodeInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && onlineJoinBtn && !onlineJoinBtn.disabled) {
+      onlineJoinBtn.click();
+    }
   });
 
   window.addEventListener("online", handleOnlineConnectionChange);

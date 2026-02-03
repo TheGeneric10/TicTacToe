@@ -71,7 +71,7 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none;box-shadow:none}
 .status{font-family:"Inter",sans-serif;font-size:13px;color:#bfc3ff;text-align:center;margin:4px 0 0}
 #onlineCancel{display:none}
 .fieldInput:focus{outline:2px solid rgba(76,255,215,.35);border-color:rgba(76,255,215,.55)}
-.statusRow{display:flex;flex-direction:column;gap:6px}
+.statusRow{display:flex;flex-direction:column;gap:6px;align-items:center}
 .status.eta{font-size:12px;color:rgba(255,255,255,.6)}
 
 /* ---------- Game Over Stadium ---------- */
