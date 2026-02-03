@@ -391,6 +391,24 @@
     }
   }
 
+  function handleOnlineConnectionChange() {
+    const onlineReady = isOnlineAvailable();
+    if (!onlineReady) {
+      if (mode === "online" && inGame) {
+        showToast("Connection lost. Returning to main menu.");
+        goMainMenu();
+      }
+      if (onlineQueueState !== "idle") {
+        onlineQueueState = "idle";
+        clearOnlineTimers();
+        if (onlineSoloBtn) onlineSoloBtn.textContent = "Solo Queue";
+        if (onlineCodeInput) onlineCodeInput.value = "";
+        stopOnlineEta();
+      }
+    }
+    updateOnlineControls();
+  }
+
   function resetOnlineUi() {
     onlineQueueState = "idle";
     clearOnlineTimers();
@@ -516,8 +534,8 @@
     }, 60000);
   });
 
-  window.addEventListener("online", updateOnlineControls);
-  window.addEventListener("offline", updateOnlineControls);
+  window.addEventListener("online", handleOnlineConnectionChange);
+  window.addEventListener("offline", handleOnlineConnectionChange);
 
   pickRed && (pickRed.onclick = () => {
     playSfx("pop");
