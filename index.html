@@ -42,7 +42,30 @@
   <p class="desc">Red vs Blue</p>
   <button class="wide" id="pvp">Play vs Player</button>
   <button class="wide" id="pvc">Play vs Computer</button>
+  <button class="wide" id="onlineBtn">Online Mode</button>
   <button class="wide" id="aboutBtn">About Game</button>
+</div>
+
+<!-- ONLINE MODE -->
+<div id="online" class="screen">
+  <h1 class="title">Online Mode</h1>
+  <p class="desc">Join by code or queue up for a random match.</p>
+  <div class="onlineBox">
+    <label class="field">
+      <span class="fieldLabel">Join by Code</span>
+      <input id="onlineCode" class="fieldInput" type="text" inputmode="numeric" maxlength="6" placeholder="Six digits">
+    </label>
+    <button class="wide" id="onlineJoin">Join Room</button>
+    <button class="wide ghostBtn" id="onlineCreate">Create Room</button>
+    <div class="divider"></div>
+    <button class="wide ghostBtn" id="onlineSolo">Solo Queue</button>
+    <button class="wide ghostBtn" id="onlineCancel">Cancel Search</button>
+    <div class="statusRow">
+      <p class="status" id="onlineStatus">Online play requires an internet connection.</p>
+      <p class="status eta" id="onlineEta">Opponent ETA: 0:00</p>
+    </div>
+  </div>
+  <button class="wide ghostBtn" id="onlineBack">Back</button>
 </div>
 
 <!-- SIDE SELECT -->

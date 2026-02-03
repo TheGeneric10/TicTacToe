@@ -13,7 +13,7 @@ This project supports **Play vs Player** (local PvP) and **Play vs Computer** (P
 | Name | TicTacToe Arena |
 | Genre | Strategy / Casual |
 | Players | 1–2 |
-| Modes | PvP, PvC |
+| Modes | PvP, PvC, Online (beta) |
 | Renderer | Canvas (`<canvas id="game">`) |
 | UI Style | Modern HUD + overlays |
 | Config | `window.GAME_ENV` (`/js/game.env.js`) |
@@ -64,10 +64,11 @@ Matches are played in rounds and tracked in the top “stadium” HUD.
 
 | Category | What’s Included |
 |---|---|
-| UI / UX | Modern screens (Menu, Side Select, Pause, Game Over, About) |
+| UI / UX | Modern screens (Menu, Side Select, Online Mode, Pause, Game Over, About) |
 | HUD | Score + round “stadium” display |
 | PvP | Local pass-and-play, with swipe bubble notifications |
 | PvC AI | “Smart-1.5” slightly-easy AI with human-like errors |
+| Online Mode | Join with a 6-digit code or queue for a match (requires connection) |
 | Animations | Mark pop-in + win line + “+1” fly effect |
 | Mobile Friendly | Touch-based play + user-select disabled |
 | Config Binding | About screen auto-loads from `GAME_ENV` |

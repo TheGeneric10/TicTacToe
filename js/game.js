@@ -74,6 +74,7 @@
 
   const menu = document.getElementById("menu");
   const sideSelect = document.getElementById("sideSelect");
+  const onlineScreen = document.getElementById("online");
   const pause = document.getElementById("pause");
   const end = document.getElementById("end");
   const about = document.getElementById("about");
@@ -99,12 +100,22 @@
 
   const pvpBtn = document.getElementById("pvp");
   const pvcBtn = document.getElementById("pvc");
+  const onlineBtn = document.getElementById("onlineBtn");
   const aboutBtn = document.getElementById("aboutBtn");
 
   const resumeBtn = document.getElementById("resume");
   const menuPauseBtn = document.getElementById("menuPause");
   const aboutPauseBtn = document.getElementById("aboutPause");
   const closeAboutBtn = document.getElementById("closeAbout");
+
+  const onlineCodeInput = document.getElementById("onlineCode");
+  const onlineJoinBtn = document.getElementById("onlineJoin");
+  const onlineCreateBtn = document.getElementById("onlineCreate");
+  const onlineSoloBtn = document.getElementById("onlineSolo");
+  const onlineCancelBtn = document.getElementById("onlineCancel");
+  const onlineBackBtn = document.getElementById("onlineBack");
+  const onlineStatusEl = document.getElementById("onlineStatus");
+  const onlineEtaEl = document.getElementById("onlineEta");
 
   // About ENV targets
   const aboutVersionEl = document.getElementById("aboutVersion");
@@ -141,7 +152,7 @@
   let gameOver = false;
   let aiThinking = false;
 
-  let mode = null;        // "pvp" | "pvc"
+  let mode = null;        // "pvp" | "pvc" | "online"
   let player1Mark = "X";  // PvP: chosen side
   let humanMark = "X";    // PvC: chosen side
 
@@ -152,10 +163,15 @@
   let aiTimeoutId = null;
   let endArmTimeoutId = null;
   let endScreenArmed = false;
+  let onlineQueueState = "idle"; // idle | searching | uhoh
+  let onlineUhOhTimer = null;
+  let onlineJoinTimer = null;
+  let onlineEtaTimer = null;
+  let onlineEtaStart = 0;
 
   // ---------- Helpers ----------
   function setActive(el, on) { if (el) el.classList.toggle("active", !!on); }
-  function hideAllScreens() { [menu, sideSelect, pause, end].forEach(s => setActive(s, false)); }
+  function hideAllScreens() { [menu, sideSelect, onlineScreen, pause, end].forEach(s => setActive(s, false)); }
 
   function clearAi() {
     if (aiTimeoutId !== null) {
@@ -195,6 +211,7 @@
   function getTurnText() {
     if (!inGame || pausedState || gameOver) return "";
     if (mode === "pvp") return current === player1Mark ? "Player 1 Turn" : "Player 2 Turn";
+    if (mode === "online") return current === humanMark ? "Your Turn" : "Opponent Turn";
     return current === humanMark ? "Your Turn" : "Computer Turn";
   }
 
@@ -260,7 +277,7 @@
     updateTopHUD();
     updateTurnHUD();
 
-    if (mode === "pvc" && current !== humanMark) queueAi();
+    if ((mode === "pvc" || mode === "online") && current !== humanMark) queueAi();
   }
 
   function startMatch() {
@@ -277,12 +294,17 @@
       const p1Team = player1Mark === "X" ? "RED" : "BLUE";
       const p2Team = player1Mark === "X" ? "BLUE" : "RED";
       showToast(`Player 1 = ${p1Team} • Player 2 = ${p2Team}`, 2500);
+    } else if (mode === "online") {
+      const team = humanMark === "X" ? "RED" : "BLUE";
+      showToast(`Online match found • You are ${team}`, 2600);
     }
   }
 
   function goMainMenu() {
     clearAi();
     clearEndTimer();
+    clearOnlineTimers();
+    onlineQueueState = "idle";
 
     inGame = false;
     pausedState = false;
@@ -301,6 +323,96 @@
   // ---------- Mode / Side Select ----------
   let pendingMode = null;
 
+  function clearOnlineTimers() {
+    if (onlineUhOhTimer) {
+      clearTimeout(onlineUhOhTimer);
+      onlineUhOhTimer = null;
+    }
+    if (onlineJoinTimer) {
+      clearTimeout(onlineJoinTimer);
+      onlineJoinTimer = null;
+    }
+    if (onlineEtaTimer) {
+      clearInterval(onlineEtaTimer);
+      onlineEtaTimer = null;
+    }
+  }
+
+  function setOnlineStatus(text) {
+    if (onlineStatusEl) onlineStatusEl.textContent = text;
+  }
+
+  function setOnlineEta(text) {
+    if (onlineEtaEl) onlineEtaEl.textContent = text;
+  }
+
+  function formatEta(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  function startOnlineEta() {
+    onlineEtaStart = performance.now();
+    setOnlineEta("Opponent ETA: 0:00");
+    if (onlineEtaTimer) clearInterval(onlineEtaTimer);
+    onlineEtaTimer = setInterval(() => {
+      const elapsed = performance.now() - onlineEtaStart;
+      setOnlineEta(`Opponent ETA: ${formatEta(elapsed)}`);
+    }, 1000);
+  }
+
+  function stopOnlineEta() {
+    if (onlineEtaTimer) {
+      clearInterval(onlineEtaTimer);
+      onlineEtaTimer = null;
+    }
+    setOnlineEta("Opponent ETA: 0:00");
+  }
+
+  function isOnlineAvailable() {
+    return navigator.onLine;
+  }
+
+  function updateOnlineControls() {
+    const onlineReady = isOnlineAvailable();
+    const searching = onlineQueueState !== "idle";
+    if (onlineJoinBtn) onlineJoinBtn.disabled = !onlineReady || searching;
+    if (onlineCreateBtn) onlineCreateBtn.disabled = !onlineReady || searching;
+    if (onlineSoloBtn) onlineSoloBtn.disabled = !onlineReady || onlineQueueState === "searching";
+    if (onlineCodeInput) onlineCodeInput.disabled = !onlineReady || searching;
+    if (onlineCancelBtn) onlineCancelBtn.style.display = searching ? "inline-block" : "none";
+
+    if (!onlineReady) {
+      setOnlineStatus("You're offline. Connect to the internet to play online.");
+    } else if (onlineQueueState === "idle") {
+      setOnlineStatus("Ready to connect. Join with a code or queue up.");
+    }
+  }
+
+  function resetOnlineUi() {
+    onlineQueueState = "idle";
+    clearOnlineTimers();
+    if (onlineSoloBtn) onlineSoloBtn.textContent = "Solo Queue";
+    if (onlineCodeInput) onlineCodeInput.value = "";
+    stopOnlineEta();
+    updateOnlineControls();
+  }
+
+  function openOnlineScreen() {
+    hideAllScreens();
+    setActive(onlineScreen, true);
+    resetOnlineUi();
+  }
+
+  function startOnlineMatch() {
+    resetOnlineUi();
+    mode = "online";
+    humanMark = Math.random() < 0.5 ? "X" : "O";
+    startMatch();
+  }
+
   function openSideSelect(whichMode) {
     pendingMode = whichMode;
     hideAllScreens();
@@ -309,6 +421,7 @@
 
   pvpBtn && (pvpBtn.onclick = () => { playSfx("pop"); openSideSelect("pvp"); });
   pvcBtn && (pvcBtn.onclick = () => { playSfx("pop"); openSideSelect("pvc"); });
+  onlineBtn && (onlineBtn.onclick = () => { playSfx("pop"); openOnlineScreen(); });
 
   sideBack && (sideBack.onclick = () => {
     playSfx("pop");
@@ -316,6 +429,95 @@
     hideAllScreens();
     setActive(menu, true);
   });
+
+  onlineBackBtn && (onlineBackBtn.onclick = () => {
+    playSfx("pop");
+    resetOnlineUi();
+    hideAllScreens();
+    setActive(menu, true);
+  });
+
+  onlineCancelBtn && (onlineCancelBtn.onclick = () => {
+    playSfx("pop");
+    resetOnlineUi();
+  });
+
+  onlineJoinBtn && (onlineJoinBtn.onclick = () => {
+    if (!isOnlineAvailable()) {
+      setOnlineStatus("You're offline. Connect to the internet to play online.");
+      return;
+    }
+    const code = (onlineCodeInput?.value || "").replace(/\s/g, "");
+    if (!/^\d{6}$/.test(code)) {
+      setOnlineStatus("Enter a valid six digit room code.");
+      return;
+    }
+    playSfx("pop");
+    onlineQueueState = "searching";
+    setOnlineStatus(`Joining room ${code}...`);
+    updateOnlineControls();
+    clearOnlineTimers();
+    startOnlineEta();
+    onlineJoinTimer = setTimeout(() => {
+      startOnlineMatch();
+    }, 1600);
+  });
+
+  onlineCreateBtn && (onlineCreateBtn.onclick = () => {
+    if (!isOnlineAvailable()) {
+      setOnlineStatus("You're offline. Connect to the internet to play online.");
+      return;
+    }
+    playSfx("pop");
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    if (onlineCodeInput) onlineCodeInput.value = code;
+    onlineQueueState = "searching";
+    setOnlineStatus(`Room created: ${code}. Waiting for opponent...`);
+    updateOnlineControls();
+    clearOnlineTimers();
+    startOnlineEta();
+    onlineUhOhTimer = setTimeout(() => {
+      onlineQueueState = "uhoh";
+      setOnlineStatus("Uh oh... no one joined yet. Keep waiting?");
+      updateOnlineControls();
+    }, 60000);
+  });
+
+  onlineSoloBtn && (onlineSoloBtn.onclick = () => {
+    if (!isOnlineAvailable()) {
+      setOnlineStatus("You're offline. Connect to the internet to play online.");
+      return;
+    }
+    if (onlineQueueState === "uhoh") {
+      playSfx("pop");
+      onlineQueueState = "searching";
+      setOnlineStatus("Still searching for a match...");
+      updateOnlineControls();
+      clearOnlineTimers();
+      startOnlineEta();
+      onlineJoinTimer = setTimeout(() => {
+        startOnlineMatch();
+      }, 5200);
+      return;
+    }
+
+    playSfx("pop");
+    onlineQueueState = "searching";
+    if (onlineSoloBtn) onlineSoloBtn.textContent = "Searching...";
+    setOnlineStatus("Searching for an opponent...");
+    updateOnlineControls();
+    clearOnlineTimers();
+    startOnlineEta();
+    onlineUhOhTimer = setTimeout(() => {
+      onlineQueueState = "uhoh";
+      if (onlineSoloBtn) onlineSoloBtn.textContent = "Keep Searching";
+      setOnlineStatus("Uh oh... no matches yet. Want to keep searching?");
+      updateOnlineControls();
+    }, 60000);
+  });
+
+  window.addEventListener("online", updateOnlineControls);
+  window.addEventListener("offline", updateOnlineControls);
 
   pickRed && (pickRed.onclick = () => {
     playSfx("pop");
@@ -389,6 +591,7 @@
     if (!inGame || pausedState || gameOver || aiThinking) return;
     if (i < 0 || i > 8) return;
     if (!board || board[i].value) return;
+    if (mode === "online" && current !== humanMark) return;
 
     board[i].value = current;
     board[i].placedAt = performance.now();
@@ -449,7 +652,7 @@
     current = (current === "X") ? "O" : "X";
     updateTurnHUD();
 
-    if (mode === "pvc" && !gameOver) {
+    if ((mode === "pvc" || mode === "online") && !gameOver) {
       const comp = (humanMark === "X") ? "O" : "X";
       if (current === comp) queueAi();
     }
@@ -594,7 +797,7 @@
     endArmTimeoutId = setTimeout(() => { endScreenArmed = true; }, END_SCREEN_ARM_MS);
     updateTurnHUD();
 
-    if (mode === "pvc") {
+    if (mode === "pvc" || mode === "online") {
       if (winner === humanMark) playSfx("win");
       else if (!winner) playSfx("draw");
       else playSfx("lose");
@@ -725,5 +928,6 @@
   updateTopHUD();
   updateTurnHUD();
   updateEndButtons();
+  updateOnlineControls();
   loop();
 })();
