@@ -124,6 +124,9 @@
   const onlineErrorText = document.getElementById("onlineErrorText");
   const onlineRetry = document.getElementById("onlineRetry");
   const onlineErrorHome = document.getElementById("onlineErrorHome");
+  const onlineBackBtn = document.getElementById("onlineBack");
+  const onlineStatusEl = document.getElementById("onlineStatus");
+  const onlineEtaEl = document.getElementById("onlineEta");
 
   // About ENV targets
   const aboutVersionEl = document.getElementById("aboutVersion");
@@ -426,6 +429,7 @@
     if (onlineCopyBtn) onlineCopyBtn.disabled = true;
     setOnlineEta("Estimated wait: --");
     hideOnlineOverlays();
+    setOnlineEta("Estimated wait: --");
     updateOnlineControls();
   }
 
@@ -499,6 +503,8 @@
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setOnlineCode(code);
     setOnlineStatus(`Room code ${code} ready. Waiting for opponent...`);
+    if (onlineCodeInput) onlineCodeInput.value = code;
+    setOnlineStatus(`Room created. Share code ${code}.`);
     setOnlineEta("Estimated wait: ~1 min");
     updateOnlineControls();
     clearOnlineTimers();
@@ -542,6 +548,33 @@
     }
     playSfx("pop");
     startSoloSearch();
+    if (onlineQueueState === "uhoh") {
+      playSfx("pop");
+      onlineQueueState = "searching";
+      setOnlineStatus("Still searching for a match...");
+      setOnlineEta("Estimated wait: ~1 min");
+      updateOnlineControls();
+      clearOnlineTimers();
+      onlineJoinTimer = setTimeout(() => {
+        startOnlineMatch();
+      }, 5200);
+      return;
+    }
+
+    playSfx("pop");
+    onlineQueueState = "searching";
+    if (onlineSoloBtn) onlineSoloBtn.textContent = "Searching...";
+    setOnlineStatus("Searching for an opponent...");
+    setOnlineEta("Estimated wait: ~1 min");
+    updateOnlineControls();
+    clearOnlineTimers();
+    onlineUhOhTimer = setTimeout(() => {
+      onlineQueueState = "uhoh";
+      if (onlineSoloBtn) onlineSoloBtn.textContent = "Keep Searching";
+      setOnlineStatus("Uh oh... no matches yet. Want to keep searching?");
+      setOnlineEta("Estimated wait: --");
+      updateOnlineControls();
+    }, 60000);
   });
 
   window.addEventListener("online", updateOnlineControls);
