@@ -112,8 +112,10 @@
   const onlineJoinBtn = document.getElementById("onlineJoin");
   const onlineSoloBtn = document.getElementById("onlineSolo");
   const onlineCancelBtn = document.getElementById("onlineCancel");
+  const onlineCreateBtn = document.getElementById("onlineCreate");
   const onlineBackBtn = document.getElementById("onlineBack");
   const onlineStatusEl = document.getElementById("onlineStatus");
+  const onlineEtaEl = document.getElementById("onlineEta");
 
   // About ENV targets
   const aboutVersionEl = document.getElementById("aboutVersion");
@@ -334,6 +336,10 @@
     if (onlineStatusEl) onlineStatusEl.textContent = text;
   }
 
+  function setOnlineEta(text) {
+    if (onlineEtaEl) onlineEtaEl.textContent = text;
+  }
+
   function isOnlineAvailable() {
     return navigator.onLine;
   }
@@ -344,12 +350,15 @@
     if (onlineJoinBtn) onlineJoinBtn.disabled = !onlineReady || searching;
     if (onlineSoloBtn) onlineSoloBtn.disabled = !onlineReady || onlineQueueState === "searching";
     if (onlineCodeInput) onlineCodeInput.disabled = !onlineReady || searching;
+    if (onlineCreateBtn) onlineCreateBtn.disabled = !onlineReady || searching;
     if (onlineCancelBtn) onlineCancelBtn.style.display = searching ? "inline-block" : "none";
 
     if (!onlineReady) {
       setOnlineStatus("You're offline. Connect to the internet to play online.");
+      setOnlineEta("Estimated wait: --");
     } else if (onlineQueueState === "idle") {
       setOnlineStatus("Ready to connect. Join with a code or queue up.");
+      setOnlineEta("Estimated wait: --");
     }
   }
 
@@ -358,6 +367,7 @@
     clearOnlineTimers();
     if (onlineSoloBtn) onlineSoloBtn.textContent = "Solo Queue";
     if (onlineCodeInput) onlineCodeInput.value = "";
+    setOnlineEta("Estimated wait: --");
     updateOnlineControls();
   }
 
@@ -403,19 +413,41 @@
     resetOnlineUi();
   });
 
+  onlineCreateBtn && (onlineCreateBtn.onclick = () => {
+    if (!isOnlineAvailable()) {
+      setOnlineStatus("You're offline. Connect to the internet to play online.");
+      setOnlineEta("Estimated wait: --");
+      return;
+    }
+    playSfx("pop");
+    onlineQueueState = "searching";
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    if (onlineCodeInput) onlineCodeInput.value = code;
+    setOnlineStatus(`Room created. Share code ${code}.`);
+    setOnlineEta("Estimated wait: ~1 min");
+    updateOnlineControls();
+    clearOnlineTimers();
+    onlineJoinTimer = setTimeout(() => {
+      startOnlineMatch();
+    }, 2500);
+  });
+
   onlineJoinBtn && (onlineJoinBtn.onclick = () => {
     if (!isOnlineAvailable()) {
       setOnlineStatus("You're offline. Connect to the internet to play online.");
+      setOnlineEta("Estimated wait: --");
       return;
     }
     const code = (onlineCodeInput?.value || "").replace(/\s/g, "");
     if (!/^\d{6}$/.test(code)) {
       setOnlineStatus("Enter a valid six digit room code.");
+      setOnlineEta("Estimated wait: --");
       return;
     }
     playSfx("pop");
     onlineQueueState = "searching";
     setOnlineStatus(`Joining room ${code}...`);
+    setOnlineEta("Estimated wait: --");
     updateOnlineControls();
     clearOnlineTimers();
     onlineJoinTimer = setTimeout(() => {
@@ -426,12 +458,14 @@
   onlineSoloBtn && (onlineSoloBtn.onclick = () => {
     if (!isOnlineAvailable()) {
       setOnlineStatus("You're offline. Connect to the internet to play online.");
+      setOnlineEta("Estimated wait: --");
       return;
     }
     if (onlineQueueState === "uhoh") {
       playSfx("pop");
       onlineQueueState = "searching";
       setOnlineStatus("Still searching for a match...");
+      setOnlineEta("Estimated wait: ~1 min");
       updateOnlineControls();
       clearOnlineTimers();
       onlineJoinTimer = setTimeout(() => {
@@ -444,12 +478,14 @@
     onlineQueueState = "searching";
     if (onlineSoloBtn) onlineSoloBtn.textContent = "Searching...";
     setOnlineStatus("Searching for an opponent...");
+    setOnlineEta("Estimated wait: ~1 min");
     updateOnlineControls();
     clearOnlineTimers();
     onlineUhOhTimer = setTimeout(() => {
       onlineQueueState = "uhoh";
       if (onlineSoloBtn) onlineSoloBtn.textContent = "Keep Searching";
       setOnlineStatus("Uh oh... no matches yet. Want to keep searching?");
+      setOnlineEta("Estimated wait: --");
       updateOnlineControls();
     }, 60000);
   });
