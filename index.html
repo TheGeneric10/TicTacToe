@@ -59,7 +59,12 @@
     <div class="divider"></div>
     <button class="wide ghostBtn" id="onlineSolo">Solo Queue</button>
     <button class="wide ghostBtn" id="onlineCancel">Cancel Search</button>
-    <p class="status" id="onlineStatus">Online play requires an internet connection.</p>
+    <div class="statusRow">
+      <p class="status" id="onlineStatus">Online play requires an internet connection.</p>
+      <button class="ghostBtn" id="onlineCreate">Create Room</button>
+      <button class="ghostBtn" id="onlineCopy">Copy Code</button>
+    </div>
+    <p class="status eta" id="onlineEta">Estimated wait: --</p>
   </div>
   <button class="wide ghostBtn" id="onlineBack">Back</button>
 </div>
@@ -93,6 +98,26 @@
   </div>
   <button class="wide" id="again">Play Again</button>
   <button class="wide" id="mainMenu">Main Menu</button>
+</div>
+
+<!-- ONLINE LEAVE CONFIRM -->
+<div id="onlineLeave" class="overlay">
+  <h1 class="title">Leave Match?</h1>
+  <p class="desc">If you leave now, your opponent will win this session.</p>
+  <div class="row">
+    <button class="wide ghostBtn" id="onlineLeaveStay">Stay</button>
+    <button class="wide redBtn" id="onlineLeaveExit">Leave</button>
+  </div>
+</div>
+
+<!-- ONLINE ERROR -->
+<div id="onlineError" class="overlay">
+  <h1 class="title">Matchmaking Issue</h1>
+  <p class="desc" id="onlineErrorText">We couldn't find a match. Try again?</p>
+  <div class="row">
+    <button class="wide" id="onlineRetry">Retry</button>
+    <button class="wide ghostBtn" id="onlineErrorHome">Home</button>
+  </div>
 </div>
 
 <!-- ABOUT -->
