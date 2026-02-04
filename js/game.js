@@ -110,10 +110,12 @@
 
   const onlineCodeInput = document.getElementById("onlineCode");
   const onlineJoinBtn = document.getElementById("onlineJoin");
+  const onlineCreateBtn = document.getElementById("onlineCreate");
   const onlineSoloBtn = document.getElementById("onlineSolo");
   const onlineCancelBtn = document.getElementById("onlineCancel");
   const onlineBackBtn = document.getElementById("onlineBack");
   const onlineStatusEl = document.getElementById("onlineStatus");
+  const onlineEtaEl = document.getElementById("onlineEta");
 
   // About ENV targets
   const aboutVersionEl = document.getElementById("aboutVersion");
@@ -164,6 +166,8 @@
   let onlineQueueState = "idle"; // idle | searching | uhoh
   let onlineUhOhTimer = null;
   let onlineJoinTimer = null;
+  let onlineEtaTimer = null;
+  let onlineEtaStart = null;
 
   // ---------- Helpers ----------
   function setActive(el, on) { if (el) el.classList.toggle("active", !!on); }
@@ -334,19 +338,58 @@
     if (onlineStatusEl) onlineStatusEl.textContent = text;
   }
 
+  function sanitizeRoomCode(value) {
+    return value.replace(/\D/g, "").slice(0, 6);
+  }
+
+  function startOnlineEta() {
+    if (!onlineEtaEl) return;
+    stopOnlineEta();
+    onlineEtaStart = Date.now();
+    const render = () => {
+      if (!onlineEtaEl || onlineEtaStart === null) return;
+      const elapsed = Math.floor((Date.now() - onlineEtaStart) / 1000);
+      const minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
+      const seconds = String(elapsed % 60).padStart(2, "0");
+      onlineEtaEl.textContent = `ETA ${minutes}:${seconds}`;
+    };
+    render();
+    onlineEtaTimer = setInterval(render, 1000);
+  }
+
+  function stopOnlineEta() {
+    if (onlineEtaTimer) {
+      clearInterval(onlineEtaTimer);
+      onlineEtaTimer = null;
+    }
+    onlineEtaStart = null;
+    if (onlineEtaEl) onlineEtaEl.textContent = "";
+  }
+
   function isOnlineAvailable() {
     return navigator.onLine;
+  }
+
+  function updateJoinAvailability() {
+    if (!onlineCodeInput || !onlineJoinBtn) return;
+    const sanitized = sanitizeRoomCode(onlineCodeInput.value || "");
+    if (onlineCodeInput.value !== sanitized) onlineCodeInput.value = sanitized;
+    const onlineReady = isOnlineAvailable();
+    const searching = onlineQueueState !== "idle";
+    onlineJoinBtn.disabled = !onlineReady || searching || sanitized.length !== 6;
   }
 
   function updateOnlineControls() {
     const onlineReady = isOnlineAvailable();
     const searching = onlineQueueState !== "idle";
-    if (onlineJoinBtn) onlineJoinBtn.disabled = !onlineReady || searching;
+    if (onlineCreateBtn) onlineCreateBtn.disabled = !onlineReady || searching;
     if (onlineSoloBtn) onlineSoloBtn.disabled = !onlineReady || onlineQueueState === "searching";
     if (onlineCodeInput) onlineCodeInput.disabled = !onlineReady || searching;
     if (onlineCancelBtn) onlineCancelBtn.style.display = searching ? "inline-block" : "none";
+    updateJoinAvailability();
 
     if (!onlineReady) {
+      stopOnlineEta();
       setOnlineStatus("You're offline. Connect to the internet to play online.");
     } else if (onlineQueueState === "idle") {
       setOnlineStatus("Ready to connect. Join with a code or queue up.");
@@ -356,6 +399,7 @@
   function resetOnlineUi() {
     onlineQueueState = "idle";
     clearOnlineTimers();
+    stopOnlineEta();
     if (onlineSoloBtn) onlineSoloBtn.textContent = "Solo Queue";
     if (onlineCodeInput) onlineCodeInput.value = "";
     updateOnlineControls();
@@ -403,12 +447,17 @@
     resetOnlineUi();
   });
 
+  onlineCodeInput && (onlineCodeInput.oninput = () => {
+    updateJoinAvailability();
+  });
+
   onlineJoinBtn && (onlineJoinBtn.onclick = () => {
     if (!isOnlineAvailable()) {
       setOnlineStatus("You're offline. Connect to the internet to play online.");
       return;
     }
-    const code = (onlineCodeInput?.value || "").replace(/\s/g, "");
+    const code = sanitizeRoomCode(onlineCodeInput?.value || "");
+    if (onlineCodeInput) onlineCodeInput.value = code;
     if (!/^\d{6}$/.test(code)) {
       setOnlineStatus("Enter a valid six digit room code.");
       return;
@@ -418,9 +467,28 @@
     setOnlineStatus(`Joining room ${code}...`);
     updateOnlineControls();
     clearOnlineTimers();
+    startOnlineEta();
     onlineJoinTimer = setTimeout(() => {
       startOnlineMatch();
     }, 1600);
+  });
+
+  onlineCreateBtn && (onlineCreateBtn.onclick = () => {
+    if (!isOnlineAvailable()) {
+      setOnlineStatus("You're offline. Connect to the internet to play online.");
+      return;
+    }
+    playSfx("pop");
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    if (onlineCodeInput) onlineCodeInput.value = code;
+    onlineQueueState = "searching";
+    setOnlineStatus(`Room ${code} created. Waiting for opponent...`);
+    updateOnlineControls();
+    clearOnlineTimers();
+    startOnlineEta();
+    onlineJoinTimer = setTimeout(() => {
+      startOnlineMatch();
+    }, 2200);
   });
 
   onlineSoloBtn && (onlineSoloBtn.onclick = () => {
@@ -434,6 +502,7 @@
       setOnlineStatus("Still searching for a match...");
       updateOnlineControls();
       clearOnlineTimers();
+      startOnlineEta();
       onlineJoinTimer = setTimeout(() => {
         startOnlineMatch();
       }, 5200);
@@ -446,10 +515,12 @@
     setOnlineStatus("Searching for an opponent...");
     updateOnlineControls();
     clearOnlineTimers();
+    startOnlineEta();
     onlineUhOhTimer = setTimeout(() => {
       onlineQueueState = "uhoh";
       if (onlineSoloBtn) onlineSoloBtn.textContent = "Keep Searching";
       setOnlineStatus("Uh oh... no matches yet. Want to keep searching?");
+      stopOnlineEta();
       updateOnlineControls();
     }, 60000);
   });
