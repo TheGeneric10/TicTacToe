@@ -363,6 +363,11 @@
 
   function setOnlineCode(code) {
     if (onlineCodeInput) onlineCodeInput.value = code;
+    if (onlineCopyBtn) {
+      const isValid = /^\d{6}$/.test(code || "");
+      onlineCopyBtn.disabled = !isValid;
+      onlineCopyBtn.style.display = isValid ? "inline-block" : "none";
+    }
     if (onlineCopyBtn) onlineCopyBtn.disabled = !/^\d{6}$/.test(code || "");
   }
 
@@ -409,7 +414,11 @@
     if (onlineSoloBtn) onlineSoloBtn.disabled = !onlineReady || onlineQueueState === "searching";
     if (onlineCodeInput) onlineCodeInput.disabled = !onlineReady || searching;
     if (onlineCreateBtn) onlineCreateBtn.disabled = !onlineReady || searching;
-    if (onlineCopyBtn) onlineCopyBtn.disabled = !/^\d{6}$/.test(onlineCodeInput?.value || "");
+    if (onlineCopyBtn) {
+      const hasCode = /^\d{6}$/.test(onlineCodeInput?.value || "");
+      onlineCopyBtn.disabled = !hasCode;
+      onlineCopyBtn.style.display = hasCode ? "inline-block" : "none";
+    }
     if (onlineCancelBtn) onlineCancelBtn.style.display = searching ? "inline-block" : "none";
 
     if (!onlineReady) {
@@ -426,6 +435,12 @@
     clearOnlineTimers();
     if (onlineSoloBtn) onlineSoloBtn.textContent = "Solo Queue";
     if (onlineCodeInput) onlineCodeInput.value = "";
+    if (onlineCopyBtn) {
+      onlineCopyBtn.disabled = true;
+      onlineCopyBtn.style.display = "none";
+    }
+    setOnlineEta("Estimated wait: --");
+    hideOnlineOverlays();
     if (onlineCopyBtn) onlineCopyBtn.disabled = true;
     setOnlineEta("Estimated wait: --");
     hideOnlineOverlays();
@@ -546,6 +561,8 @@
       setOnlineEta("Estimated wait: --");
       return;
     }
+    playSfx("pop");
+    startSoloSearch();
     playSfx("pop");
     startSoloSearch();
     if (onlineQueueState === "uhoh") {
