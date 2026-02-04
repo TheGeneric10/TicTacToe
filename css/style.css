@@ -68,7 +68,10 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none;box-shadow:none}
 }
 .fieldInput::placeholder{color:rgba(255,255,255,.35)}
 .divider{height:1px;background:rgba(255,255,255,.08)}
+.statusRow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.statusRow .status{margin:0;text-align:left;flex:1}
 .status{font-family:"Inter",sans-serif;font-size:13px;color:#bfc3ff;text-align:center;margin:4px 0 0}
+.status.eta{margin:0;text-align:center;font-size:12px;color:rgba(191,195,255,.75)}
 #onlineCancel{display:none}
 .fieldInput:focus{outline:2px solid rgba(76,255,215,.35);border-color:rgba(76,255,215,.55)}
 
