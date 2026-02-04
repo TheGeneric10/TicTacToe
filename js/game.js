@@ -389,6 +389,8 @@
 
   function resolveOnlineForfeit(isOpponentWinner) {
     if (mode !== "online") return;
+    pausedState = false;
+    setActive(pause, false);
     const opponentMark = humanMark === "X" ? "O" : "X";
     const winnerMark = isOpponentWinner ? opponentMark : humanMark;
     gameOver = true;
