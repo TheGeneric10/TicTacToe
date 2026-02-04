@@ -68,6 +68,8 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none;box-shadow:none}
 }
 .fieldInput::placeholder{color:rgba(255,255,255,.35)}
 .divider{height:1px;background:rgba(255,255,255,.08)}
+.statusRow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.statusRow .status{margin:0;text-align:left;flex:1 1 160px}
 .statusRow{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .statusRow .status{margin:0;text-align:left;flex:1}
 .status{font-family:"Inter",sans-serif;font-size:13px;color:#bfc3ff;text-align:center;margin:4px 0 0}
