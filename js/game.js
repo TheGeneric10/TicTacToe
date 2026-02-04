@@ -112,8 +112,18 @@
   const onlineJoinBtn = document.getElementById("onlineJoin");
   const onlineSoloBtn = document.getElementById("onlineSolo");
   const onlineCancelBtn = document.getElementById("onlineCancel");
+  const onlineCreateBtn = document.getElementById("onlineCreate");
+  const onlineCopyBtn = document.getElementById("onlineCopy");
   const onlineBackBtn = document.getElementById("onlineBack");
   const onlineStatusEl = document.getElementById("onlineStatus");
+  const onlineEtaEl = document.getElementById("onlineEta");
+  const onlineLeave = document.getElementById("onlineLeave");
+  const onlineLeaveStay = document.getElementById("onlineLeaveStay");
+  const onlineLeaveExit = document.getElementById("onlineLeaveExit");
+  const onlineError = document.getElementById("onlineError");
+  const onlineErrorText = document.getElementById("onlineErrorText");
+  const onlineRetry = document.getElementById("onlineRetry");
+  const onlineErrorHome = document.getElementById("onlineErrorHome");
 
   // About ENV targets
   const aboutVersionEl = document.getElementById("aboutVersion");
@@ -219,7 +229,6 @@
     turnHUD.textContent = t;
   }
 
-  // ===== FIXED: bubble dot color depends on the TEAM (X=RED, O=BLUE) =====
   function teamDotClassForMark(mark) {
     return (mark === "X") ? "red" : "blue";
   }
@@ -312,6 +321,7 @@
 
     hideAllScreens();
     setActive(about, false);
+    hideOnlineOverlays();
     setActive(menu, true);
     updateTurnHUD();
   }
@@ -330,12 +340,67 @@
     }
   }
 
+  function hideOnlineOverlays() {
+    setActive(onlineLeave, false);
+    setActive(onlineError, false);
+  }
+
+  function showOnlineError(text) {
+    if (onlineErrorText) onlineErrorText.textContent = text;
+    setActive(onlineError, true);
+  }
+
   function setOnlineStatus(text) {
     if (onlineStatusEl) onlineStatusEl.textContent = text;
   }
 
+  function setOnlineEta(text) {
+    if (onlineEtaEl) onlineEtaEl.textContent = text;
+  }
+
+  function setOnlineCode(code) {
+    if (onlineCodeInput) onlineCodeInput.value = code;
+    if (onlineCopyBtn) {
+      const isValid = /^\d{6}$/.test(code || "");
+      onlineCopyBtn.disabled = !isValid;
+      onlineCopyBtn.style.display = isValid ? "inline-block" : "none";
+    }
+  }
+
+  async function copyOnlineCode() {
+    const code = (onlineCodeInput?.value || "").trim();
+    if (!/^\d{6}$/.test(code)) {
+      setOnlineStatus("Enter or generate a valid six digit room code.");
+      return;
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        onlineCodeInput?.focus();
+        onlineCodeInput?.select();
+        document.execCommand("copy");
+      }
+      setOnlineStatus(`Code ${code} copied. Share it with your opponent.`);
+    } catch (err) {
+      setOnlineStatus("Unable to copy. Long-press or select the code to copy.");
+    }
+  }
+
   function isOnlineAvailable() {
     return navigator.onLine;
+  }
+
+  function resolveOnlineForfeit(isOpponentWinner) {
+    if (mode !== "online") return;
+    pausedState = false;
+    setActive(pause, false);
+    const opponentMark = humanMark === "X" ? "O" : "X";
+    const winnerMark = isOpponentWinner ? opponentMark : humanMark;
+    gameOver = true;
+    lastResult = winnerMark;
+    scores[winnerMark] += 1;
+    showEnd(winnerMark, isOpponentWinner ? "YOU LOSE" : "YOU WIN");
   }
 
   function updateOnlineControls() {
@@ -344,12 +409,20 @@
     if (onlineJoinBtn) onlineJoinBtn.disabled = !onlineReady || searching;
     if (onlineSoloBtn) onlineSoloBtn.disabled = !onlineReady || onlineQueueState === "searching";
     if (onlineCodeInput) onlineCodeInput.disabled = !onlineReady || searching;
+    if (onlineCreateBtn) onlineCreateBtn.disabled = !onlineReady || searching;
+    if (onlineCopyBtn) {
+      const hasCode = /^\d{6}$/.test(onlineCodeInput?.value || "");
+      onlineCopyBtn.disabled = !hasCode;
+      onlineCopyBtn.style.display = hasCode ? "inline-block" : "none";
+    }
     if (onlineCancelBtn) onlineCancelBtn.style.display = searching ? "inline-block" : "none";
 
     if (!onlineReady) {
       setOnlineStatus("You're offline. Connect to the internet to play online.");
+      setOnlineEta("Estimated wait: --");
     } else if (onlineQueueState === "idle") {
       setOnlineStatus("Ready to connect. Join with a code or queue up.");
+      setOnlineEta("Estimated wait: --");
     }
   }
 
@@ -358,6 +431,12 @@
     clearOnlineTimers();
     if (onlineSoloBtn) onlineSoloBtn.textContent = "Solo Queue";
     if (onlineCodeInput) onlineCodeInput.value = "";
+    if (onlineCopyBtn) {
+      onlineCopyBtn.disabled = true;
+      onlineCopyBtn.style.display = "none";
+    }
+    setOnlineEta("Estimated wait: --");
+    hideOnlineOverlays();
     updateOnlineControls();
   }
 
@@ -365,6 +444,23 @@
     hideAllScreens();
     setActive(onlineScreen, true);
     resetOnlineUi();
+  }
+
+  function startSoloSearch() {
+    onlineQueueState = "searching";
+    if (onlineSoloBtn) onlineSoloBtn.textContent = "Searching...";
+    setOnlineStatus("Searching for an opponent...");
+    setOnlineEta("Estimated wait: ~1 min");
+    updateOnlineControls();
+    clearOnlineTimers();
+    onlineUhOhTimer = setTimeout(() => {
+      onlineQueueState = "idle";
+      if (onlineSoloBtn) onlineSoloBtn.textContent = "Solo Queue";
+      setOnlineStatus("No matches found. Try again?");
+      setOnlineEta("Estimated wait: --");
+      updateOnlineControls();
+      showOnlineError("We couldn't find a match after 1 minute. Retry or go back home.");
+    }, 60000);
   }
 
   function startOnlineMatch() {
@@ -403,19 +499,45 @@
     resetOnlineUi();
   });
 
+  onlineCreateBtn && (onlineCreateBtn.onclick = () => {
+    if (!isOnlineAvailable()) {
+      setOnlineStatus("You're offline. Connect to the internet to play online.");
+      setOnlineEta("Estimated wait: --");
+      return;
+    }
+    playSfx("pop");
+    onlineQueueState = "searching";
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    setOnlineCode(code);
+    setOnlineStatus(`Room code ${code} ready. Waiting for opponent...`);
+    setOnlineEta("Estimated wait: ~1 min");
+    updateOnlineControls();
+    clearOnlineTimers();
+    onlineJoinTimer = setTimeout(() => {
+      startOnlineMatch();
+    }, 2500);
+  });
+
+  onlineCopyBtn && (onlineCopyBtn.onclick = () => {
+    copyOnlineCode();
+  });
+
   onlineJoinBtn && (onlineJoinBtn.onclick = () => {
     if (!isOnlineAvailable()) {
       setOnlineStatus("You're offline. Connect to the internet to play online.");
+      setOnlineEta("Estimated wait: --");
       return;
     }
     const code = (onlineCodeInput?.value || "").replace(/\s/g, "");
     if (!/^\d{6}$/.test(code)) {
       setOnlineStatus("Enter a valid six digit room code.");
+      setOnlineEta("Estimated wait: --");
       return;
     }
     playSfx("pop");
     onlineQueueState = "searching";
-    setOnlineStatus(`Joining room ${code}...`);
+    setOnlineStatus(`Joining room ${code}... Pending opponent.`);
+    setOnlineEta("Estimated wait: --");
     updateOnlineControls();
     clearOnlineTimers();
     onlineJoinTimer = setTimeout(() => {
@@ -426,36 +548,42 @@
   onlineSoloBtn && (onlineSoloBtn.onclick = () => {
     if (!isOnlineAvailable()) {
       setOnlineStatus("You're offline. Connect to the internet to play online.");
+      setOnlineEta("Estimated wait: --");
       return;
     }
-    if (onlineQueueState === "uhoh") {
-      playSfx("pop");
-      onlineQueueState = "searching";
-      setOnlineStatus("Still searching for a match...");
-      updateOnlineControls();
-      clearOnlineTimers();
-      onlineJoinTimer = setTimeout(() => {
-        startOnlineMatch();
-      }, 5200);
-      return;
-    }
-
     playSfx("pop");
-    onlineQueueState = "searching";
-    if (onlineSoloBtn) onlineSoloBtn.textContent = "Searching...";
-    setOnlineStatus("Searching for an opponent...");
-    updateOnlineControls();
-    clearOnlineTimers();
-    onlineUhOhTimer = setTimeout(() => {
-      onlineQueueState = "uhoh";
-      if (onlineSoloBtn) onlineSoloBtn.textContent = "Keep Searching";
-      setOnlineStatus("Uh oh... no matches yet. Want to keep searching?");
-      updateOnlineControls();
-    }, 60000);
+    startSoloSearch();
   });
 
   window.addEventListener("online", updateOnlineControls);
   window.addEventListener("offline", updateOnlineControls);
+
+  onlineCodeInput && (onlineCodeInput.oninput = () => updateOnlineControls());
+
+  onlineRetry && (onlineRetry.onclick = () => {
+    playSfx("pop");
+    setActive(onlineError, false);
+    startSoloSearch();
+  });
+
+  onlineErrorHome && (onlineErrorHome.onclick = () => {
+    playSfx("pop");
+    setActive(onlineError, false);
+    resetOnlineUi();
+    hideAllScreens();
+    setActive(menu, true);
+  });
+
+  onlineLeaveStay && (onlineLeaveStay.onclick = () => {
+    playSfx("pop");
+    setActive(onlineLeave, false);
+  });
+
+  onlineLeaveExit && (onlineLeaveExit.onclick = () => {
+    playSfx("pop");
+    setActive(onlineLeave, false);
+    resolveOnlineForfeit(true);
+  });
 
   pickRed && (pickRed.onclick = () => {
     playSfx("pop");
@@ -494,7 +622,15 @@
     updateTurnHUD();
   });
 
-  menuPauseBtn && (menuPauseBtn.onclick = () => { playSfx("pop"); goMainMenu(); });
+  menuPauseBtn && (menuPauseBtn.onclick = () => {
+    if (mode === "online" && inGame && !gameOver) {
+      playSfx("pop");
+      setActive(onlineLeave, true);
+      return;
+    }
+    playSfx("pop");
+    goMainMenu();
+  });
 
   // End menu (armed delay prevents fall-through)
   mainMenuBtn && (mainMenuBtn.onclick = () => {
@@ -716,7 +852,7 @@
   }
 
   // ---------- End overlay ----------
-  function showEnd(winner) {
+  function showEnd(winner, overrideText = null) {
     clearAi();
     clearEndTimer();
     aiThinking = false;
@@ -725,7 +861,8 @@
     updateGameOverStadium();
     updateEndButtons();
 
-    if (winner === "X") endText.textContent = "RED WINS!";
+    if (overrideText) endText.textContent = overrideText;
+    else if (winner === "X") endText.textContent = "RED WINS!";
     else if (winner === "O") endText.textContent = "BLUE WINS!";
     else endText.textContent = "DRAW!";
 
