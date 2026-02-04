@@ -229,7 +229,6 @@
     turnHUD.textContent = t;
   }
 
-  // ===== FIXED: bubble dot color depends on the TEAM (X=RED, O=BLUE) =====
   function teamDotClassForMark(mark) {
     return (mark === "X") ? "red" : "blue";
   }
